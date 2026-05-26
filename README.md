@@ -16,22 +16,29 @@
 
 ## Installation
 
-### Prerequisites
+### Arch Linux
+```bash
+curl -O https://raw.githubusercontent.com/satori-5423/woman/main/PKGBUILD
+makepkg -si
+```
+
+### Build from Source
+
+#### Prerequisites
 
 - `cargo` command (install cargo or rustup)
 - `man` command (man-db or equivalent)
 - An API key for a compatible LLM provider
 
-### Build from Source
-
+#### build steps
 ```bash
 git clone https://github.com/satori-5423/woman.git
 cd woman
 cargo build --release
-ln -s target/release/woman ~/.local/bin/woman
+cp target/release/woman ~/.local/bin/woman
 ```
 
-### Shell Completions (Fish)
+#### Shell Completions (Fish)
 
 ```bash
 cp completions/woman.fish ~/.config/fish/completions/

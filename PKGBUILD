@@ -19,6 +19,10 @@ b2sums=('SKIP')
 
 build() {
     cd "$srcdir/$pkgname-$pkgver"
+    # Strip -flto=auto from CFLAGS to avoid GCC LTO ↔ LLD linker incompatibility.
+    # ring's C/assembly code compiled with GCC LTO produces objects that lld
+    # (LLVM linker) cannot read, causing undefined reference errors.
+    export CFLAGS="${CFLAGS/-flto=auto/}"
     cargo build --release --locked
 }
 

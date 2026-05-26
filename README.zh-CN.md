@@ -16,22 +16,29 @@
 
 ## 安装
 
-### 前置依赖
+### Arch Linux
+```bash
+curl -O https://raw.githubusercontent.com/satori-5423/woman/main/PKGBUILD
+makepkg -si
+```
+
+### 从源码构建
+
+#### 前置依赖
 
 - `cargo` 命令（安装 cargo 或 rustup）
 - `man` 命令（man-db 或同类工具）
 - 兼容 LLM 提供商的 API 密钥
 
-### 从源码构建
-
+#### 构建步骤
 ```bash
 git clone https://github.com/satori-5423/woman.git
 cd woman
 cargo build --release
-ln -s target/release/woman ~/.local/bin/woman
+cp target/release/woman ~/.local/bin/woman
 ```
 
-### Shell 补全（Fish）
+#### Shell 补全（Fish）
 
 ```bash
 cp completions/woman.fish ~/.config/fish/completions/
