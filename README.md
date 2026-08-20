@@ -62,6 +62,13 @@ woman model set-key your-api-key-here
 
 # (Optional) Set a custom API URL
 woman model set-url https://api.deepseek.com/v1
+
+# (Optional) DeepSeek V4 thinking mode
+# DeepSeek V4 models reason by default, which makes translation slow and
+# expensive for small pages. Thinking is DISABLED by default in woman.
+# Re-enable it (and optionally tune the effort) if you want it:
+woman model set-thinking enabled        # or: disabled
+woman model set-effort low              # low | high | max
 ```
 
 ### View Current Configuration

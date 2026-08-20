@@ -62,6 +62,12 @@ woman model set-key your-api-key-here
 
 # （可选）设置自定义 API 地址
 woman model set-url https://api.deepseek.com/v1
+
+# （可选）DeepSeek V4 思考模式
+# DeepSeek V4 模型默认开启思考（reasoning），对翻译小手册页来说又慢又贵。
+# woman 默认已关闭思考；如需开启（或调节思考强度）：
+woman model set-thinking enabled        # 或：disabled
+woman model set-effort low              # low | high | max
 ```
 
 ### 查看当前配置
