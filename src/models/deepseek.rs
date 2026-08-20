@@ -19,6 +19,7 @@ impl ModelProvider for DeepSeekProvider {
             .no_gzip()
             .no_brotli()
             .no_deflate()
+            .timeout(std::time::Duration::from_secs(30))
             .build()
             .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
