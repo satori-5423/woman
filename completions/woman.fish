@@ -39,11 +39,13 @@ complete -c woman -n 'not __woman_in_model_mode' -a model  -d 'Manage API model 
 complete -c woman -n 'not __woman_in_model_mode' -l model -d 'Manage API model configuration'
 
 # model sub-subcommands (only offered before one is picked)
-complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url' -a list      -d 'List available models'
-complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url' -a show      -d 'Show current configuration'
-complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url' -a set-model -d 'Set the active model name'
-complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url' -a set-key   -d 'Set the API key'
-complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url' -a set-url   -d 'Set the API base URL'
+complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url set-thinking set-effort' -a list      -d 'List available models'
+complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url set-thinking set-effort' -a show      -d 'Show current configuration'
+complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url set-thinking set-effort' -a set-model -d 'Set the active model name'
+complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url set-thinking set-effort' -a set-key   -d 'Set the API key'
+complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url set-thinking set-effort' -a set-url   -d 'Set the API base URL'
+complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url set-thinking set-effort' -a set-thinking -d 'Enable/disable thinking mode (enabled|disabled)'
+complete -c woman -n '__woman_in_model_mode; and not __fish_seen_subcommand_from list show set-model set-key set-url set-thinking set-effort' -a set-effort -d 'Set reasoning effort (low|high|max)'
 
-# After set-model / set-key / set-url: suppress file completion (free-text input).
-complete -c woman -n '__woman_in_model_mode; and __fish_seen_subcommand_from set-model set-key set-url' -f
+# After the value-taking subcommands: suppress file completion (free-text input).
+complete -c woman -n '__woman_in_model_mode; and __fish_seen_subcommand_from set-model set-key set-url set-thinking set-effort' -f
