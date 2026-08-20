@@ -154,14 +154,11 @@ fn main() {
     }
 
     // Build arguments for the final man invocation.
-    // Pass through flags (like -P, -T) but exclude -w/--path/--where.
-    // Section numbers and page names are dropped because we pass the
-    // translated file paths directly, which encode the section.
-    let mut man_args: Vec<String> = args[1..]
-        .iter()
-        .filter(|arg| arg.starts_with('-') && *arg != "-w" && *arg != "--path" && *arg != "--where")
-        .cloned()
-        .collect();
+    // Keep all flags — including options that take a value (e.g. -P pager,
+    // -T device, -M path) — but drop -w/--path/--where, section numbers and
+    // page names, because we pass the translated file paths directly (they
+    // already encode the section).
+    let mut man_args = build_man_args(&args[1..]);
 
     for p in translated_paths {
         man_args.push(p.to_string_lossy().into_owned());
@@ -180,6 +177,8 @@ fn handle_model_subcommand(args: &[String]) {
         "set-model" => cmd_set_model(args),
         "set-key" => cmd_set_key(args),
         "set-url" => cmd_set_url(args),
+        "set-thinking" => cmd_set_thinking(args),
+        "set-effort" => cmd_set_effort(args),
         _ => print_model_help(),
     }
 }
@@ -247,6 +246,17 @@ fn cmd_show_config() {
 
     let masked_key = mask_api_key(&cfg.api_key);
     println!("API Key:      {}", masked_key);
+    println!(
+        "Thinking:     {}",
+        if cfg.thinking.eq_ignore_ascii_case("enabled") {
+            "enabled"
+        } else {
+            "disabled"
+        }
+    );
+    if cfg.thinking.eq_ignore_ascii_case("enabled") {
+        println!("Effort:       {}", cfg.reasoning_effort);
+    }
 }
 
 fn cmd_set_model(args: &[String]) {
@@ -294,20 +304,66 @@ fn cmd_set_url(args: &[String]) {
     println!("API URL updated to: {}", cfg.api_url);
 }
 
+fn cmd_set_thinking(args: &[String]) {
+    if args.len() < 4 {
+        eprintln!("Error: Please specify 'enabled' or 'disabled'.");
+        eprintln!("Usage: woman model set-thinking <enabled|disabled>");
+        std::process::exit(1);
+    }
+    let value = args[3].to_ascii_lowercase();
+    if value != "enabled" && value != "disabled" {
+        eprintln!("Error: thinking mode must be 'enabled' or 'disabled'.");
+        std::process::exit(1);
+    }
+    let mut cfg = config::Config::load();
+    cfg.thinking = value;
+    cfg.save().unwrap_or_else(|e| {
+        eprintln!("Error saving config: {}", e);
+        std::process::exit(1);
+    });
+    println!("Thinking mode set to: {}", cfg.thinking);
+}
+
+fn cmd_set_effort(args: &[String]) {
+    if args.len() < 4 {
+        eprintln!("Error: Please specify the reasoning effort.");
+        eprintln!("Usage: woman model set-effort <low|high|max>");
+        std::process::exit(1);
+    }
+    let value = args[3].to_ascii_lowercase();
+    if !["low", "high", "max"].contains(&value.as_str()) {
+        eprintln!("Error: effort must be one of: low, high, max.");
+        std::process::exit(1);
+    }
+    let mut cfg = config::Config::load();
+    cfg.reasoning_effort = value;
+    cfg.save().unwrap_or_else(|e| {
+        eprintln!("Error saving config: {}", e);
+        std::process::exit(1);
+    });
+    println!("Reasoning effort set to: {}", cfg.reasoning_effort);
+}
+
 fn print_model_help() {
     println!("woman model management commands:");
-    println!("  woman model list              List available models");
-    println!("  woman model show              Show current configuration");
-    println!("  woman model set-model <name>  Set the active model name");
-    println!("  woman model set-key <key>     Set the API key for the active model");
-    println!("  woman model set-url <url>     Set the custom API base URL");
+    println!("  woman model list                  List available models");
+    println!("  woman model show                  Show current configuration");
+    println!("  woman model set-model <name>      Set the active model name");
+    println!("  woman model set-key <key>         Set the API key for the active model");
+    println!("  woman model set-url <url>         Set the custom API base URL");
+    println!("  woman model set-thinking <on|off> Enable or disable thinking mode (default: off)");
+    println!("  woman model set-effort <e>        Set reasoning effort: low|high|max (thinking mode only)");
 }
 
 fn mask_api_key(key: &str) -> String {
     if key.is_empty() {
-        "<not set>".to_string()
-    } else if key.len() > 8 {
-        format!("{}••••••••{}", &key[..4], &key[key.len() - 4..])
+        return "<not set>".to_string();
+    }
+    let chars: Vec<char> = key.chars().collect();
+    if chars.len() > 8 {
+        let head: String = chars[..4].iter().collect();
+        let tail: String = chars[chars.len() - 4..].iter().collect();
+        format!("{}••••••••{}", head, tail)
     } else {
         "••••••••".to_string()
     }
@@ -341,4 +397,86 @@ fn get_fish_man_dir() -> Option<PathBuf> {
         }
     }
     None
+}
+
+/// man-db short options that consume the following argument as their value.
+const MAN_SHORT_VALUE_OPTIONS: &[&str] = &[
+    "-C", "-E", "-L", "-M", "-P", "-R", "-S", "-T", "-e", "-m", "-p", "-r",
+];
+
+/// man-db long options that consume the following argument as their value
+/// (the `--opt=value` form is handled separately).
+const MAN_LONG_VALUE_OPTIONS: &[&str] = &[
+    "--config-file",
+    "--encoding",
+    "--locale",
+    "--manpath",
+    "--pager",
+    "--preprocessor",
+    "--prompt",
+    "--recode",
+    "--sections",
+    "--systems",
+    "--troff-device",
+];
+
+/// Options handled by woman itself and stripped from the final man invocation.
+const MAN_STRIPPED_OPTIONS: &[&str] = &["-w", "--path", "--where"];
+
+/// Reconstruct the arguments for the final `man` call: keep every flag (and
+/// the value of options that require one), drop section numbers and page
+/// names (the translated paths are appended separately).
+fn build_man_args(args: &[String]) -> Vec<String> {
+    let mut result = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        let arg = &args[i];
+
+        if MAN_STRIPPED_OPTIONS.contains(&arg.as_str()) {
+            i += 1;
+            continue;
+        }
+
+        if arg.starts_with("--") {
+            // `--opt=value` or a bare long flag.
+            if arg.contains('=') || !MAN_LONG_VALUE_OPTIONS.contains(&arg.as_str()) {
+                result.push(arg.clone());
+                i += 1;
+                continue;
+            }
+            // Long option expecting a value in the next argument.
+            result.push(arg.clone());
+            if let Some(value) = args.get(i + 1) {
+                result.push(value.clone());
+                i += 1;
+            }
+            i += 1;
+            continue;
+        }
+
+        if arg.starts_with('-') && arg.len() > 1 {
+            // Short option (possibly a cluster such as `-aP`). If the first
+            // option in the cluster requires a value and it is not attached
+            // (e.g. `-P cat`), consume the next argument as its value.
+            let first = &arg[..2];
+            if MAN_SHORT_VALUE_OPTIONS.contains(&first) {
+                result.push(arg.clone());
+                if arg.len() == 2
+                    && let Some(value) = args.get(i + 1)
+                {
+                    result.push(value.clone());
+                    i += 1;
+                }
+                i += 1;
+                continue;
+            }
+            result.push(arg.clone());
+            i += 1;
+            continue;
+        }
+
+        // Positional token: section number or page name — dropped.
+        i += 1;
+    }
+    result
 }
