@@ -2,7 +2,7 @@
 # Contributor: satori-5423 <suxue2746841150@gmail.com>
 
 pkgname=woman
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc='AI-Powered Man Page Translation Tool'
 arch=('x86_64')
