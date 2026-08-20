@@ -15,7 +15,7 @@ depends=(
 )
 makedepends=('cargo')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/satori-5423/woman/archive/v$pkgver.tar.gz")
-b2sums=('SKIP')
+sha256sums=('286b0ba6a74ec3626dd413bf2a57a84bedded157a9f32b13b8dd36488dd93498')
 
 build() {
     cd "$srcdir/$pkgname-$pkgver"
