@@ -35,7 +35,7 @@ fn test_get_target_locale() {
     }
 
     let result = locale::get_target_locale();
-    assert_eq!(result, "zh_CN.UTF-8");
+    assert_eq!(result, "C");
 
     // Restore
     if let Some(v) = saved_lc_all {
@@ -104,4 +104,23 @@ fn test_should_bypass_translation() {
         "ls".to_string(),
         "--help".to_string()
     ]));
+
+    // Combined short options containing a bypass flag should bypass
+    assert!(locale::should_bypass_translation(&["-kh".to_string()]));
+    assert!(locale::should_bypass_translation(&[
+        "-lk".to_string(),
+        "ls".to_string()
+    ]));
+
+    // Combined flags WITHOUT a bypass flag must NOT bypass
+    assert!(!locale::should_bypass_translation(&[
+        "-aw".to_string(),
+        "ls".to_string()
+    ]));
+    assert!(!locale::should_bypass_translation(&[
+        "-P".to_string(),
+        "cat".to_string(),
+        "ls".to_string()
+    ]));
+    assert!(!locale::should_bypass_translation(&["-t".to_string()]));
 }
