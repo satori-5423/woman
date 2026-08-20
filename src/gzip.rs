@@ -16,10 +16,12 @@ pub fn read_gzip_file(path: &Path) -> Result<String, String> {
         .map_err(|e| format!("Failed to open file {}: {}", path.display(), e))?;
     let mut decoder = GzDecoder::new(file);
     match decoder.read_to_end(&mut bytes) {
-        Ok(_) if !bytes.is_empty() => {
+        Ok(_) => {
+            // Valid gzip stream — even a decompressed-empty one is honored, so
+            // a gzip file can never be misread as raw binary fallback.
             return Ok(String::from_utf8_lossy(&bytes).into_owned());
         }
-        _ => {
+        Err(_) => {
             // Not a valid gzip stream — fall through to plain-text fallback.
             drop(decoder);
         }
